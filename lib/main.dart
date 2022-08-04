@@ -1,115 +1,132 @@
+import 'dart:io';
+
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_sound/flutter_sound.dart';
+import 'package:flutter_sound/public/flutter_sound_player.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:walkie_tolkie_app/controllers/storage_controller.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async  {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
-  // This widget is the root of your application.
+class MyApp extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
+  State<MyApp> createState() => _MyAppState();
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
+class _MyAppState extends State<MyApp> {
+  FlutterSoundPlayer _myPlayer = FlutterSoundPlayer();
+  FlutterSoundRecorder _myRecorded = FlutterSoundRecorder();
+  final storageController = StorageController();
+  bool _mPlayerIsInited = false;
+  bool _mRecordedIsInited = false;
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+  void initState() {
+    super.initState();
+    _myPlayer.openPlayer().then((value) {
+      setState(() {
+        _mPlayerIsInited = true;
+      });
+      openRecorder();
     });
   }
 
+
+
+  @override
+  void dispose() {
+    // Be careful : you must `close` the audio session when you have finished with it.
+    _myPlayer.closePlayer();
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
-          ],
+    return MaterialApp(
+      title: 'Material App',
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text('Material App Bar'),
+        ),
+        body: Center(
+          child: Container(
+            child: TextButton(
+              onPressed: (){
+                if(!_mPlayerIsInited) return;
+                if(!_mRecordedIsInited) return;
+                recordAndPlay();
+              }, 
+              child: Text("Play")
+            )
+          ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+  void playSound1() async {
+    await _myPlayer.startPlayer(
+      // fromURI: "https://firebasestorage.googleapis.com/v0/b/walkietalkie-ea0f9.appspot.com/o/zapsplat_fantasy_fairy_dust_twinkle_sparkle_bell_tree_lower_pitched_65543.mp3?alt=media&token=b5a0332a-db16-45fb-b546-2a06d787ab37",
+      fromURI: "https://firebasestorage.googleapis.com/v0/b/walkietalkie-ea0f9.appspot.com/o/zapsplat_cartoon_anime_laser_weapon_weak_fire_79059.mp3?alt=media&token=8776b66e-62cc-47a2-b6c8-9a3a66c1e104",
+      codec: Codec.mp3,
+      whenFinished: () async {
+        playSound2();
+      }
+    );
+  }
+  void playSound2() async {
+    await _myPlayer.startPlayer(
+      fromURI: "https://firebasestorage.googleapis.com/v0/b/walkietalkie-ea0f9.appspot.com/o/zapsplat_fantasy_fairy_dust_twinkle_sparkle_bell_tree_lower_pitched_65543.mp3?alt=media&token=b5a0332a-db16-45fb-b546-2a06d787ab37",
+      // fromURI: "https://firebasestorage.googleapis.com/v0/b/walkietalkie-ea0f9.appspot.com/o/zapsplat_cartoon_anime_laser_weapon_weak_fire_79059.mp3?alt=media&token=8776b66e-62cc-47a2-b6c8-9a3a66c1e104",
+      codec: Codec.mp3,
+      whenFinished: (){
+        playSound1();
+      }
+    );
+  }
+  void openRecorder() async {
+    var status = await Permission.microphone.request();
+    if (status != PermissionStatus.granted) {
+      throw RecordingPermissionException('Microphone permission not granted');
+    }
+    _myRecorded.openRecorder().then((value){
+      setState(() {
+        _mRecordedIsInited = true;
+      });
+    });
+  }
+  void recordAndPlay() async {
+    Directory tempDir = await getTemporaryDirectory();
+    String outputFile = '${tempDir.path}/myFile.aac';
+
+    await _myRecorded.startRecorder
+    (
+        codec: Codec.aacADTS,
+        toFile: outputFile,
+        sampleRate: 16000,
+        numChannels: 1,
+    );
+    await Future.delayed(const Duration(seconds: 5));
+    await _myRecorded.stopRecorder();
+    /* await _myPlayer.startPlayer(
+      fromURI: outputFile,
+      codec: Codec.aacADTS,
+      whenFinished: (){ /* Do something */},
+
+    ); */
+    String? url = await storageController.uploadAndGetUrl(1, File(outputFile));
+    if(url == null){
+      print("Ocurrió un error al subir el archivo");
+      return;
+    }
+    await _myPlayer.startPlayer(
+      fromURI: url,
+      codec: Codec.mp3,
+      whenFinished: (){ /* Do something */},
+
     );
   }
 }
