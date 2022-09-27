@@ -37,7 +37,7 @@ class StorageController {
     }
   }
 
-  Future<String?> uploadAndGetUrl(int userId, File file) async {
+  Future<String?> uploadAndGetUrl(String userId, File file) async {
     final String storagePath = "files/$userId/${DateTime.now().toString()}.mp3";
     final bool successUpload = await uploadFile(storagePath, file);
     if (!successUpload) {

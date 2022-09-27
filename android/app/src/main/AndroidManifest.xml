@@ -7,7 +7,7 @@
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="Manifest.permission.CAPTURE_AUDIO_OUTPUT" />
    <application
-        android:label="walkie_tolkie_app"
+        android:label="WalkieTalkie"
         android:name="${applicationName}"
         android:usesCleartextTraffic="true"
         android:icon="@mipmap/ic_launcher">
