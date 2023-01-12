@@ -4,9 +4,9 @@ A new Flutter project.
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+This a Walkie Talkie App made in Flutter .
 
-A few resources to get you started if this is your first Flutter project:
+It uses flutter_sound to allow user record and play audios. All resources are saved on firebase storage. It also includes a firebase basic authentication.
 
 - [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
 - [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
